@@ -233,3 +233,90 @@
     allocated-amount
   )
 )
+
+;; Security and Access Control Enhancements
+(define-constant MAX-ADMIN-ROLES u3)
+(define-constant ADMIN-THRESHOLD u2)
+
+;; New Roles and Permissions
+(define-map role-assignments
+  { 
+    user: principal,
+    role: uint 
+  }
+  {
+    is-active: bool,
+    assigned-by: principal,
+    assigned-at: uint
+  }
+)
+
+;; Upgradability and Versioning
+(define-data-var contract-version uint u2)
+(define-data-var upgrade-timestamp uint u0)
+
+;; Staking and Rewards Mechanism
+(define-map staking-rewards
+  {
+    user: principal,
+    platform-id: uint
+  }
+  {
+    total-staked: uint,
+    reward-rate: uint,
+    last-claim-time: uint
+  }
+)
+
+;; NFT Position Tracking
+(define-non-fungible-token position-token uint)
+
+;; Whitelisting and KYC Integration
+(define-map user-whitelist
+  { user: principal }
+  {
+    is-verified: bool,
+    kyc-level: uint,
+    verification-timestamp: uint
+  }
+)
+
+;; Advanced Fee Management
+(define-map fee-tiers
+  { tier: uint }
+  {
+    min-deposit: uint,
+    max-deposit: uint,
+    fee-percentage: uint
+  }
+)
+
+;; Liquidation Protection
+(define-map liquidation-protection
+  { user: principal }
+  {
+    protection-amount: uint,
+    expires-at: uint
+  }
+)
+
+;; Whitelisting Function
+(define-public (add-to-whitelist
+  (user principal)
+  (kyc-level uint)
+)
+  (begin
+    (asserts! (is-eq tx-sender CONTRACT-OWNER) ERR-UNAUTHORIZED)
+    
+    (map-set user-whitelist 
+      { user: user }
+      {
+        is-verified: true,
+        kyc-level: kyc-level,
+        verification-timestamp: stacks-block-height
+      }
+    )
+    
+    (ok true)
+  )
+)
